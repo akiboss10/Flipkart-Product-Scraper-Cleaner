@@ -45,13 +45,20 @@
 
 ## Folder Structure
 Flipkart-Product-Scraper/
-│
+
+
 ├── data/ # Raw HTML files from Flipkart
+
 ├── proxy.txt # Optional list of proxy IPs
+
 ├── locating_single.py # Script to scrape raw HTML pages
+
 ├── project.py # Script to parse HTML and generate CSV
+
 ├── data.csv # Output CSV file (generated after running project.py)
+
 ├── requirements.txt # Python libraries required
+
 └── README.md
 
 
