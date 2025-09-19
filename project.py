@@ -1,50 +1,36 @@
-from bs4 import BeautifulSoup
-import os
-import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
 
-# Initialize lists for storing data
-brands = []
-descriptions = []
-prices = []
-product_links = []
+driver = webdriver.Chrome()
+query = "bag"
+all_links = []
 
-# Loop through all saved files in "data" folder
-for file in sorted(os.listdir("data"), key=lambda x: int(x.split("_")[1].split(".")[0])):
-    if file.endswith(".html") and file.startswith("bag_"):
-        with open(f"data/{file}", "r", encoding="utf-8") as f:
-            html_doc = f.read()
+for i in range(1, 10):
+    url = f"https://www.flipkart.com/search?q={query}&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=off&as=off&page={i}"
+    driver.get(url)
 
-        soup = BeautifulSoup(html_doc, "html.parser")
+    try:
+        products = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.WKTcLC"))
+        )
+    except:
+        print(f"⚠ No products found on page {i}")
+        continue
 
-        # Brand
-        brand_div = soup.find("div", class_="syl9yP")
-        brand = brand_div.get_text(strip=True) if brand_div else None
+    for p in products:
+        link = p.get_attribute("href")
+        if link:
+            all_links.append(link)
 
-        # Description
-        desc_div = soup.find("a", class_="IRpwTa")
-        description = desc_div.get_text(strip=True) if desc_div else None
+    print(f"✅ Collected {len(products)} links from page {i}")
+    time.sleep(1)
 
-        # Price
-        price_div = soup.find("div", class_="_30jeq3")
-        price = price_div.get_text(strip=True) if price_div else None
+driver.quit()
 
-        # Product link
-        link_tag = soup.find("a", href=True)
-        link = "https://www.flipkart.com" + link_tag['href'] if link_tag else None
-
-        # Append values to lists
-        brands.append(brand)
-        descriptions.append(description)
-        prices.append(price)
-        product_links.append(link)
-
-# Save structured data into CSV
-df = pd.DataFrame({
-    "Brand": brands,
-    "Description": descriptions,
-    "Price": prices,
-    "Product Link": product_links
-})
-
-df.to_csv("data/flipkart_products.csv", index=False, encoding="utf-8")
-print("CSV file created with", len(df), "rows")
+# Show all links
+print(f"\nTotal links collected: {len(all_links)}")
+for l in all_links[:10]:  # print first 10 only
+    print(l)
