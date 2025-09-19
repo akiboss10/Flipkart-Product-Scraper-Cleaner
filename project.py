@@ -1,49 +1,50 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup
-import time
 import os
+import pandas as pd
 
-# Create data folder if not exists
-os.makedirs("data", exist_ok=True)
+# Initialize lists for storing data
+brands = []
+descriptions = []
+prices = []
+product_links = []
 
-driver = webdriver.Chrome()  # Make sure chromedriver is in PATH
-query = "bag"
-file = 0
+# Loop through all saved files in "data" folder
+for file in sorted(os.listdir("data"), key=lambda x: int(x.split("_")[1].split(".")[0])):
+    if file.endswith(".html") and file.startswith("bag_"):
+        with open(f"data/{file}", "r", encoding="utf-8") as f:
+            html_doc = f.read()
 
-for i in range(1, 10):  # pages 1 to 9
-    driver.get(f"https://www.flipkart.com/search?q={query}&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=off&as=off&page={i}")
-    time.sleep(2)  # allow page to load
+        soup = BeautifulSoup(html_doc, "html.parser")
 
-    try:
-        elems = driver.find_elements(By.CLASS_NAME, "hCKiGj")
-        if not elems:
-            print(f"No items found on page {i}")
-            continue
+        # Brand
+        brand_div = soup.find("div", class_="syl9yP")
+        brand = brand_div.get_text(strip=True) if brand_div else None
 
-        print(f"{len(elems)} item(s) found on page {i}")
+        # Description
+        desc_div = soup.find("a", class_="IRpwTa")
+        description = desc_div.get_text(strip=True) if desc_div else None
 
-        for elem in elems:
-            try:
-                html_content = elem.get_attribute("outerHTML")
-                soup = BeautifulSoup(html_content, "html.parser")
-                pretty_html = soup.prettify()
+        # Price
+        price_div = soup.find("div", class_="_30jeq3")
+        price = price_div.get_text(strip=True) if price_div else None
 
-                # Write each product to a separate HTML file
-                with open(f"data/{query}_{file}.html", "w", encoding="utf-8") as f:
-                    f.write(pretty_html)
+        # Product link
+        link_tag = soup.find("a", href=True)
+        link = "https://www.flipkart.com" + link_tag['href'] if link_tag else None
 
-                file += 1
+        # Append values to lists
+        brands.append(brand)
+        descriptions.append(description)
+        prices.append(price)
+        product_links.append(link)
 
-            except Exception as e:
-                print(f"Error processing an element: {e}")
+# Save structured data into CSV
+df = pd.DataFrame({
+    "Brand": brands,
+    "Description": descriptions,
+    "Price": prices,
+    "Product Link": product_links
+})
 
-        # Only print summary per page
-        print(f"Page {i} completed, total files saved so far: {file}\n")
-
-    except NoSuchElementException:
-        print(f"No elements found on page {i}")
-
-driver.quit()
-print("Scraping completed! Total files saved:", file)
+df.to_csv("data/flipkart_products.csv", index=False, encoding="utf-8")
+print("CSV file created with", len(df), "rows")
