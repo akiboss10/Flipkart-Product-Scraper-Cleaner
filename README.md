@@ -21,7 +21,7 @@
    - Cleans special characters (like the ₹ symbol) using Python's `html` module.  
    - Saves the structured data to a CSV file (`data.csv`) with UTF-8 encoding for Excel compatibility.
 
----
+<img width="1586" height="939" alt="Image" src="https://github.com/user-attachments/assets/bff9f4de-5d47-46f0-8ef1-0089231e238c" />
 
 ## Features
 
